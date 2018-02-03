@@ -64,9 +64,13 @@ def checkServiceHealth (serviceInstances = None):
                 print(serviceInstance)
                 healtyServiceInstances += 1
 
-    return healtyServiceInstances >= minHealtyServiceInstances
+        if healtyServiceInstances >= minHealtyServiceInstances:
+            return "healthy"
+        else:
+            return "uneahlty"
 
 #Get the average resource usage across the instances, number of instances and status of the service
+#Returns a dictionary
 def getServiceStatus (service):
     serviceStats = getServiceStats(service)
     serviceRam = 0
@@ -76,13 +80,8 @@ def getServiceStatus (service):
         serviceCpu += int(instance['cpu'].strip(' \t\n\r%'))
     serviceRam = serviceRam / len(serviceStats)
     serviceCpu = serviceCpu / len(serviceStats)
-    print (checkServiceHealth(serviceStats))
-    serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam}
+    serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam, 'status': checkServiceHealth(serviceStats), 'instances': len(serviceStats)}
     return serviceState
-   # return instances
-   # for instanceId in instances:
-   #     result.append(getInstanceStats(instanceId))
-   # return result
 
 def colPrint(data):
     print('{:16} {:20} {:8} {:8}'.format('ip','service','cpu','memory'))
