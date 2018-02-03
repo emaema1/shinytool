@@ -5,6 +5,7 @@ import pprint
 from collections import defaultdict
 
 pp = pprint.PrettyPrinter(indent=2)
+minHealtyServiceInstances = 8
 #server = "127.0.0.1:9999"
 endpoint = "servers"
 
@@ -55,6 +56,15 @@ def getServiceStats (service=None):
     #print (result)
     return result
 
+#expects a list of instances that are part of a service, and checks if enough are healty.
+def checkServiceHealth (serviceInstances = None):
+        healtyServiceInstances = 0
+        for serviceInstance in serviceInstances:
+            if serviceInstance['status'] == 'healthy':
+                print(serviceInstance)
+                healtyServiceInstances += 1
+
+    return healtyServiceInstances >= minHealtyServiceInstances
 
 #Get the average resource usage across the instances, number of instances and status of the service
 def getServiceStatus (service):
@@ -66,6 +76,7 @@ def getServiceStatus (service):
         serviceCpu += int(instance['cpu'].strip(' \t\n\r%'))
     serviceRam = serviceRam / len(serviceStats)
     serviceCpu = serviceCpu / len(serviceStats)
+    print (checkServiceHealth(serviceStats))
     serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam}
     return serviceState
    # return instances
@@ -121,5 +132,5 @@ server = args.server
 
 #pp.pprint(getInstanceStats(instances['StorageService']))
 #print(getServiceStats('StorageService'))
-colPrint(getServiceStats('PermissionsService'))
+#colPrint(getServiceStats('PermissionsService'))
 print(getServiceStatus('PermissionsService'))
