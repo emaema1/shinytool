@@ -16,9 +16,6 @@ def apiReq (server,endpoint):
     else:
         apiResponse.raise_for_status()
 
-def getinstanceList():
-    return
-
 #def getServiceInstances ():
 #    #instances = defaultdict(lambda: defaultdict(dict))
 #    instances = defaultdict(list)
@@ -58,24 +55,29 @@ def getServiceStats (service=None):
     #print (result)
     return result
 
-def getServiceStatsAverage (service):
+
+#Get the average resource usage across the instances, number of instances and status of the service
+def getServiceStatus (service):
     serviceStats = getServiceStats(service)
     serviceRam = 0
     serviceCpu = 0
     for instance in serviceStats:
-        serviceRam += float(instance['memory'].strip(' \t\n\r%'))/len(serviceStats)
-        serviceCpu += float(instance['cpu'].strip(' \t\n\r%'))/len(serviceStats)
-    return serviceRam
+        serviceRam += int(instance['memory'].strip(' \t\n\r%'))
+        serviceCpu += int(instance['cpu'].strip(' \t\n\r%'))
+    serviceRam = serviceRam / len(serviceStats)
+    serviceCpu = serviceCpu / len(serviceStats)
+    serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam}
+    return serviceState
    # return instances
    # for instanceId in instances:
    #     result.append(getInstanceStats(instanceId))
    # return result
 
 def colPrint(data):
-    print('{:15} {:20} {:6} {:6}'.format('ip','service','cpu','memory'))
+    print('{:16} {:20} {:8} {:8}'.format('ip','service','cpu','memory'))
     print('------------------------------------------------------------')
     for item in data:
-        row = '{:15} {:20} {:6} {:6} {:8}'.format(item['ip'],item['service'], item['cpu'], item['memory'], item['status'])
+        row = '{:16} {:20} {:8} {:8} {:8}'.format(item['ip'],item['service'], item['cpu'], item['memory'], item['status'])
         print (row)
 
 
@@ -119,4 +121,5 @@ server = args.server
 
 #pp.pprint(getInstanceStats(instances['StorageService']))
 #print(getServiceStats('StorageService'))
-colPrint(getServiceStats())
+colPrint(getServiceStats('PermissionsService'))
+print(getServiceStatus('PermissionsService'))
