@@ -5,7 +5,7 @@ import pprint
 from collections import defaultdict
 
 pp = pprint.PrettyPrinter(indent=2)
-server = "127.0.0.1:9999"
+#server = "127.0.0.1:9999"
 endpoint = "servers"
 
 def apiReq (server,endpoint):
@@ -16,31 +16,66 @@ def apiReq (server,endpoint):
     else:
         apiResponse.raise_for_status()
 
-def getServiceInstances ():
-    #instances = defaultdict(lambda: defaultdict(dict))
-    instances = defaultdict(list)
-    ids = apiReq(server, 'servers')
-    for id in ids:
-        instance = apiReq(server, id)
-        instances[instance['service']].append(id)
-    return instances
+def getinstanceList():
+    return
 
+#def getServiceInstances ():
+#    #instances = defaultdict(lambda: defaultdict(dict))
+#    instances = defaultdict(list)
+#    ids = apiReq(server, 'servers')
+#    for id in ids:
+#        instance = apiReq(server, id)
+#        instances[instance['service']].append(id)
+#   return instances
+
+# Retrieve stats for a specific instance, identified by the ip
+# Also checks that resource usage is within expected bound and mark the instance status appropiately
 def getInstanceStats (instanceId):
     result = apiReq(server, instanceId)
     result.update({'ip': instanceId})
+    #Below we strip the % sign and convert memory and cpu to a number to compare usage
+    if float(result['memory'].strip(' \t\n\r%')) < 75 and float(result['cpu'].strip(' \t\n\r%')) < 75:
+        result.update({'status': 'healthy'})
+    else:
+        result.update({'status': 'unhealthy'})
     return result
 
-def getServicesStats (instances):
-    result = []
-    for instanceId in instances:
-        result.append(getInstanceStats(instanceId))
+#retrieves data for a specified service instances. If the service is not specified retrieves all instances
+def getServiceStats (service=None):
+    result=[]
+    instanceIds = apiReq(server, 'servers')
+    instances = defaultdict(list)
+    for instanceId in instanceIds:
+        instance = getInstanceStats(instanceId)
+        #print(instance)
+        instances[instance['service']].append(instance)
+    #print(instances)
+    if not service:
+        for serviceId in instances:
+            result = result + (instances[serviceId])
+    else:
+        result = instances[service]
+    #print (result)
     return result
+
+def getServiceStatsAverage (service):
+    serviceStats = getServiceStats(service)
+    serviceRam = 0
+    serviceCpu = 0
+    for instance in serviceStats:
+        serviceRam += float(instance['memory'].strip(' \t\n\r%'))/len(serviceStats)
+        serviceCpu += float(instance['cpu'].strip(' \t\n\r%'))/len(serviceStats)
+    return serviceRam
+   # return instances
+   # for instanceId in instances:
+   #     result.append(getInstanceStats(instanceId))
+   # return result
 
 def colPrint(data):
     print('{:15} {:20} {:6} {:6}'.format('ip','service','cpu','memory'))
-    print('--------------------------------------------------')
+    print('------------------------------------------------------------')
     for item in data:
-        row = '{:15} {:20} {:6} {:6}'.format(item['ip'],item['service'], item['cpu'], item['memory'])
+        row = '{:15} {:20} {:6} {:6} {:8}'.format(item['ip'],item['service'], item['cpu'], item['memory'], item['status'])
         print (row)
 
 
@@ -62,7 +97,7 @@ parser.add_argument(
     required=False
 )
 parser.add_argument(
-    '--healtcheck',
+    '--healthcheck',
     help='Prints a list of all the services with a dangerously low number of instances',
     action="store_true",
     required=False
@@ -79,10 +114,9 @@ server = args.server
 #print(vars(args))
 #print(getServiceInstances()['StorageService'])
 #print(getServiceInstances())
-instances = getServiceInstances()
-
 
 
 
 #pp.pprint(getInstanceStats(instances['StorageService']))
-colPrint(getServicesStats(instances['StorageService']))
+#print(getServiceStats('StorageService'))
+colPrint(getServiceStats())
