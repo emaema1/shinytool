@@ -92,37 +92,42 @@ def colPrint(data):
 
 
 parser = argparse.ArgumentParser(description='Manage shiny microservices')
+group = parser.add_mutually_exclusive_group(required=True)
 parser.add_argument(
-    '--server',
-    help='REST Api server url, e.g. http://127.0.0.1:9999/',
-    required=True
+    'server',
+    help='REST Api server:port , e.g. 127.0.0.1:9999',
+    #required=True
 )
-parser.add_argument(
+group.add_argument(
     '--summary',
-    help='Prints a list of the all the running instances stats',
+    help='Prints a list of the all the running instances',
     action="store_true",
     required=False
 )
-parser.add_argument(
+group.add_argument(
     '--serviceStats',
     help='Prints a list of all the instances running the specified service',
     required=False
 )
-parser.add_argument(
+group.add_argument(
     '--healthcheck',
     help='Prints a list of all the services with a dangerously low number of instances',
     action="store_true",
     required=False
 )
-parser.add_argument(
+group.add_argument(
     '--monitorService',
     help='linux top style resource monitoring for a specified server instances',
     required=False
 )
 
 args = parser.parse_args()
-#server = vars(args)['server']
 server = args.server
+
+
+
+
+
 #print(vars(args))
 #print(getServiceInstances()['StorageService'])
 #print(getServiceInstances())
