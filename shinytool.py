@@ -56,19 +56,22 @@ def getServiceStats (service=None):
     #print (result)
     return result
 
-#expects a list of instances that are part of a service, and checks if enough are healty.
-def checkServiceHealth (serviceInstances = None):
-        healtyServiceInstances = 0
+#expects a list of instances, separates them by service and checks if enough instance for each service are healty.
+#Return a dictionary such as { 'service1':'healty','service2': 'unhealty'}
+def checkServiceHealth (serviceInstances = dict):
+        result = {}
+        healtyServiceInstances = defaultdict(int)
         for serviceInstance in serviceInstances:
             if serviceInstance['status'] == 'healthy':
                 print(serviceInstance)
-                healtyServiceInstances += 1
+                healtyServiceInstances[serviceInstance['service']] += 1
 
-        if healtyServiceInstances >= minHealtyServiceInstances:
-            return "healthy"
-        else:
-            return "uneahlty"
-
+        for service in healtyServiceInstances:
+            if healtyServiceInstances[service] >= minHealtyServiceInstances:
+                result[service] = 'healthy'
+            else:
+                result[service] = 'uneahlty'
+        return result
 #Get the average resource usage across the instances, number of instances and status of the service
 #Returns a dictionary
 def getServiceStatus (service):
@@ -80,7 +83,8 @@ def getServiceStatus (service):
         serviceCpu += int(instance['cpu'].strip(' \t\n\r%'))
     serviceRam = serviceRam / len(serviceStats)
     serviceCpu = serviceCpu / len(serviceStats)
-    serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam, 'status': checkServiceHealth(serviceStats), 'instances': len(serviceStats)}
+    #servicesHealth =
+    serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam, 'status': checkServiceHealth(serviceStats)[service], 'instances': len(serviceStats)}
     return serviceState
 
 def colPrint(data):
@@ -124,6 +128,15 @@ group.add_argument(
 args = parser.parse_args()
 server = args.server
 
+
+if args.summary:
+    colPrint(getServiceStats())
+
+#if args.healthcheck:
+#    instances = getServiceStats()
+
+
+#if args.monitorService:
 
 
 
