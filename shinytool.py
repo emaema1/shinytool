@@ -6,8 +6,11 @@ import os
 from time import sleep
 from collections import defaultdict
 
+
 pp = pprint.PrettyPrinter(indent=2)
-minHealtyServiceInstances = 8
+minHealthyServiceInstances = 2
+minHealthyCpu = 75
+minHealthyMemory = 75
 #server = "127.0.0.1:9999"
 
 
@@ -40,7 +43,7 @@ def getInstanceStats (instanceId):
     result.update({'ip': instanceId})
 
     #Below we strip the % sign and convert memory and cpu to a number to compare usage
-    if float(result['memory'].strip(' \t\n\r%')) < 75 and float(result['cpu'].strip(' \t\n\r%')) < 75:
+    if float(result['memory'].strip(' \t\n\r%')) < minHealthyMemory and float(result['cpu'].strip(' \t\n\r%')) < minHealthyCpu:
         result.update({'status': 'healthy'})
     else:
         result.update({'status': 'unhealthy'})
@@ -85,12 +88,16 @@ def getServiceHealth (serviceInstances = dict):
     serviceHealthSummary = {}
     #We don't know how many services are part of the instance list
     healtyServiceInstances = defaultdict(int)
+
     for serviceInstance in serviceInstances:
         if serviceInstance['status'] == 'healthy':
             healtyServiceInstances[serviceInstance['service']] += 1
+        else:
+            if not healtyServiceInstances[serviceInstance['service']]:
+                healtyServiceInstances[serviceInstance['service']] = 0
 
     for service in healtyServiceInstances:
-        if healtyServiceInstances[service] >= minHealtyServiceInstances:
+        if healtyServiceInstances[service] >= minHealthyServiceInstances:
             serviceHealthSummary[service] = 'healthy'
         else:
             serviceHealthSummary[service] = 'unhealty'
@@ -161,7 +168,24 @@ group = parser.add_mutually_exclusive_group(required=True)
 parser.add_argument(
     'server',
     help='REST Api server:port, e.g. 127.0.0.1:9999',
-    #required=True
+)
+parser.add_argument(
+    '--memoryHealth',
+    help='memory health percentage threshold. Defaults to 75.  e.g --memoryHealth 80 ',
+    type=int,
+    required=False
+)
+parser.add_argument(
+    '--cpuHealth',
+    help='memory health percentage threshold. Defaults to 75.  e.g --cpuHealth 80 ',
+    type=int,
+    required=False
+)
+parser.add_argument(
+    '--healthyInstances',
+    help='minimum number of instances required for a service to be healthy. Defaults to 2.  e.g --healthyInstances 3 ',
+    type=int,
+    required=False
 )
 group.add_argument(
     '--summary',
@@ -180,15 +204,24 @@ group.add_argument(
     action="store_true",
     required=False
 )
+
 group.add_argument(
     '--monitorService',
     help='linux top style resource monitoring for a specified server instances. e.g --monitorService TimeService',
     required=False
 )
-
 args = parser.parse_args()
 server = args.server
 
+#Assign optional parameters
+if args.cpuHealth:
+    minHealthyCpu = args.cpuHealth
+
+if args.memoryHealth:
+    minHealthyMemory = args.memoryHealth
+
+if args.healthyInstances:
+    minHealthyServiceInstances = args.healthyInstances
 
 if args.summary:
     printInstances(getServiceStats())
