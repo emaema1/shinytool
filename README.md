@@ -28,33 +28,43 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  
   --memoryHealth MEMORYHEALTH
                         memory health percentage threshold. Defaults to 75.
                         e.g --memoryHealth 80
+                        
   --cpuHealth CPUHEALTH
                         memory health percentage threshold. Defaults to 75.
                         e.g --cpuHealth 80
+                        
   --healthyInstances HEALTHYINSTANCES
                         minimum number of instances required for a service to
                         be healthy. Defaults to 2. e.g --healthyInstances 3
+                        
   --summary             Prints a list of the all the running instances for all
                         services
+                        
   --serviceStats SERVICESTATS
                         Prints a list of all the instances running the
                         specified service. e.g --serviceStats TimeService
+                        
   --healthcheck         Prints a list of all the services with a low number of
                         healthy instances
+                        
   --monitorService MONITORSERVICE
                         linux top style resource monitoring for a specified
                         server instances. e.g --monitorService TimeService
 
 ## Examples
 
-print a list of all the running instances for all services, with default health treesholds
+----------------------
+print a list of all the running instances for all services, with default health thresholds
+
 python shinytool.py 127.0.0.1:9999 --summary
 
 ----------------------
-print a list of all the running instances for all services, with custom cpu and memry threshold
+print a list of all the running instances for all services, with custom cpu and memory threshold
+
 python shinytool.py 127.0.0.1:9999 --summary --cpuHealth 80 --memoryHealth 80
 
 The above will only flag as unhealty instances with either more than 80% used cpu or more than 80% used memory
