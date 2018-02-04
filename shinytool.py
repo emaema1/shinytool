@@ -2,6 +2,9 @@ import json
 import requests
 import argparse
 import pprint
+#import curses
+import os
+from time import sleep
 from collections import defaultdict
 
 pp = pprint.PrettyPrinter(indent=2)
@@ -63,14 +66,14 @@ def checkServiceHealth (serviceInstances = dict):
         healtyServiceInstances = defaultdict(int)
         for serviceInstance in serviceInstances:
             if serviceInstance['status'] == 'healthy':
-                print(serviceInstance)
+                #print(serviceInstance)
                 healtyServiceInstances[serviceInstance['service']] += 1
 
         for service in healtyServiceInstances:
             if healtyServiceInstances[service] >= minHealtyServiceInstances:
                 result[service] = 'healthy'
             else:
-                result[service] = 'uneahlty'
+                result[service] = 'unhealty'
         return result
 #Get the average resource usage across the instances, number of instances and status of the service
 #Returns a dictionary
@@ -132,10 +135,18 @@ server = args.server
 if args.summary:
     colPrint(getServiceStats())
 
-#if args.healthcheck:
-#    instances = getServiceStats()
+if args.healthcheck:
+    instances = getServiceStats()
+    pp.pprint(checkServiceHealth(instances))
 
+if args.serviceStats:
+    pp.pprint(getServiceStatus(args.serviceStats))
 
+if args.monitorService:
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        colPrint(getServiceStats(args.monitorService))
+        sleep(10)
 #if args.monitorService:
 
 
@@ -150,4 +161,4 @@ if args.summary:
 #pp.pprint(getInstanceStats(instances['StorageService']))
 #print(getServiceStats('StorageService'))
 #colPrint(getServiceStats('PermissionsService'))
-print(getServiceStatus('PermissionsService'))
+#print(getServiceStatus('PermissionsService'))
