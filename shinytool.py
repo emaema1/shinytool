@@ -2,7 +2,6 @@ import json
 import requests
 import argparse
 import pprint
-#import curses
 import os
 from time import sleep
 from collections import defaultdict
@@ -12,6 +11,7 @@ minHealtyServiceInstances = 8
 #server = "127.0.0.1:9999"
 endpoint = "servers"
 
+
 def apiReq (server,endpoint):
     apiUri = 'http://' + server + '/' + endpoint
     apiResponse = requests.get(apiUri)
@@ -20,14 +20,6 @@ def apiReq (server,endpoint):
     else:
         apiResponse.raise_for_status()
 
-#def getServiceInstances ():
-#    #instances = defaultdict(lambda: defaultdict(dict))
-#    instances = defaultdict(list)
-#    ids = apiReq(server, 'servers')
-#    for id in ids:
-#        instance = apiReq(server, id)
-#        instances[instance['service']].append(id)
-#   return instances
 
 # Retrieve stats for a specific instance, identified by the ip
 # Also checks that resource usage is within expected bound and mark the instance status appropiately
@@ -40,6 +32,7 @@ def getInstanceStats (instanceId):
     else:
         result.update({'status': 'unhealthy'})
     return result
+
 
 #retrieves data for a specified service instances. If the service is not specified retrieves all instances
 def getServiceStats (service=None):
@@ -59,10 +52,11 @@ def getServiceStats (service=None):
     #print (result)
     return result
 
+
 #expects a list of instances, separates them by service and checks if enough instance for each service are healty.
 #Return a dictionary such as { 'service1':'healty','service2': 'unhealty'}
 def checkServiceHealth (serviceInstances = dict):
-        result = {}
+        result = defaultdict(dict)
         healtyServiceInstances = defaultdict(int)
         for serviceInstance in serviceInstances:
             if serviceInstance['status'] == 'healthy':
@@ -75,30 +69,49 @@ def checkServiceHealth (serviceInstances = dict):
             else:
                 result[service] = 'unhealty'
         return result
+
+
 #Get the average resource usage across the instances, number of instances and status of the service
 #Returns a dictionary
 def getServiceStatus (service):
     serviceStats = getServiceStats(service)
-    serviceRam = 0
+    serviceMemory = 0
     serviceCpu = 0
     for instance in serviceStats:
-        serviceRam += int(instance['memory'].strip(' \t\n\r%'))
+        serviceMemory += int(instance['memory'].strip(' \t\n\r%'))
         serviceCpu += int(instance['cpu'].strip(' \t\n\r%'))
-    serviceRam = serviceRam / len(serviceStats)
+    serviceMemory = serviceMemory / len(serviceStats)
     serviceCpu = serviceCpu / len(serviceStats)
     #servicesHealth =
-    serviceState = {'service': service, 'cpu': serviceCpu, 'ram': serviceRam, 'status': checkServiceHealth(serviceStats)[service], 'instances': len(serviceStats)}
+    serviceState = {'service': service, 'cpu': serviceCpu, 'memory': serviceMemory, 'status': checkServiceHealth(serviceStats)[service], 'instances': len(serviceStats)}
     return serviceState
 
-def colPrint(data):
-    print('{:16} {:20} {:8} {:8}'.format('ip','service','cpu','memory'))
+
+def printInstances(data):
+    print('{:16} {:20} {:8} {:8}'.format('ip','service','cpu','memory','status'))
     print('------------------------------------------------------------')
+    print(data)
     for item in data:
         row = '{:16} {:20} {:8} {:8} {:8}'.format(item['ip'],item['service'], item['cpu'], item['memory'], item['status'])
         print (row)
 
+def printServiceStatus(data):
+    print('{:25} {:8} {:8} {:8}'.format('service', 'cpu', 'memory','status'))
+    print('------------------------------------------------------------')
+    row = '{:25} {:^8.2f} {:^8.2f} {:8}'.format(data['service'], data['cpu'], data['memory'],data['status'])
+    print (row)
+
+def printServiceHealth(data):
+    print (data)
+    print('{:16} {:20}'.format('service','status'))
+    print('---------------------------------')
+    for service in data:
+        row = '{:16} {:16}'.format( service, data[service] )
+        print (row)
+
 
 parser = argparse.ArgumentParser(description='Manage shiny microservices')
+
 group = parser.add_mutually_exclusive_group(required=True)
 parser.add_argument(
     'server',
@@ -133,30 +146,31 @@ server = args.server
 
 
 if args.summary:
-    colPrint(getServiceStats())
+    #colPrint(getServiceStats())
+    instances = getServiceStats()
+    printInstances(instances)
+    #print(format_as_table (instances,keys,headers))
 
 if args.healthcheck:
     instances = getServiceStats()
-    pp.pprint(checkServiceHealth(instances))
+    printServiceHealth(checkServiceHealth(instances))
+    print(checkServiceHealth(instances))
 
 if args.serviceStats:
-    pp.pprint(getServiceStatus(args.serviceStats))
-
+    printServiceStatus(getServiceStatus(args.serviceStats))
+    print(getServiceStatus(args.serviceStats))
 if args.monitorService:
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         colPrint(getServiceStats(args.monitorService))
-        sleep(10)
+        sleep(5)
+
+
 #if args.monitorService:
-
-
-
 
 #print(vars(args))
 #print(getServiceInstances()['StorageService'])
 #print(getServiceInstances())
-
-
 
 #pp.pprint(getInstanceStats(instances['StorageService']))
 #print(getServiceStats('StorageService'))
